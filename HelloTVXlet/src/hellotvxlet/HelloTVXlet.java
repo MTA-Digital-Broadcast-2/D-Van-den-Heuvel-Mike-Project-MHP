@@ -37,13 +37,21 @@ public class HelloTVXlet implements Xlet, UserEventListener{
     
     private int currentRIJ;
     private int currentCOL;
-    private int locRIJ, locCOL;
-    private int numberCount;
     
     private Random rd = new Random();
     
     private boolean[][] locked = new boolean[9][9];
-    private int[][] numbers = new int[9][9];
+    private int[][] numbers = new int[][]{
+        {3,2,9,6,5,7,8,4,1},
+        {7,4,5,8,3,1,2,9,6},
+        {6,1,8,2,4,9,3,7,5},
+        {1,9,3,4,6,8,5,2,7},
+        {2,7,6,1,9,5,4,8,3},
+        {8,5,4,3,7,2,6,1,9},
+        {4,3,2,7,1,6,9,5,8},
+        {5,8,7,9,2,3,1,6,4},
+        {9,6,1,5,8,4,7,3,2}
+    };
     
     public HelloTVXlet() {
         
@@ -62,6 +70,12 @@ public class HelloTVXlet implements Xlet, UserEventListener{
       //scene2 = HSceneFactory.getInstance().getBestScene(sceneTemplate);
       
       //knop11.setTextContent("5", HTextButton.NORMAL_STATE);
+      
+      for(int i = 0;i<numbers.length;i++){
+          for(int j = 0;j<numbers.length;j++){
+            locked[i][j]=true;
+        }
+      }
       
       knop11 = new HTextButton("11",50,50,50,50);
       knop12 = new HTextButton("12",100,50,50,50);
@@ -571,6 +585,7 @@ public class HelloTVXlet implements Xlet, UserEventListener{
         
         UserEventRepository repos = new UserEventRepository("keys");
         
+        repos.addKey(org.havi.ui.event.HRcEvent.VK_NUMPAD0);
         repos.addKey(org.havi.ui.event.HRcEvent.VK_NUMPAD1);
         repos.addKey(org.havi.ui.event.HRcEvent.VK_NUMPAD2);
         repos.addKey(org.havi.ui.event.HRcEvent.VK_NUMPAD3);
@@ -640,51 +655,69 @@ public class HelloTVXlet implements Xlet, UserEventListener{
                     break;
             }
             
-            //debug rij collom
-            //System.out.println(currentRIJ + "," + currentCOL);
-            //System.out.println(HRcEvent.VK_NUMPAD9-96);
-            //System.out.println(numbers[0][0]+","+numbers[0][1]+","+numbers[0][2]);
-            //System.out.println(numbers[1][0]+","+numbers[1][1]+","+numbers[1][2]);
-            //System.out.println(numbers[2][0]+","+numbers[2][1]+","+numbers[2][2]);
-            
         }
     }
     
-    public void generateSudoku(){
-        numberCount = 30;
-        boolean containsNum;
+    public void generateSudoku(){       
+        int swapCount = 100; 
+        int removeCount = 50;
         
-        while(numberCount != 0){
-            int num = rd.nextInt(9);
-        
-            locRIJ = rd.nextInt(9);
-            locCOL = rd.nextInt(9);
-
-            containsNum = false;
-            if(numbers[locRIJ][locCOL]>0){
-                containsNum = true;
-            }
-
-            for(int i = 0;i<numbers.length-1;i++){
-                if(numbers[i][locCOL]==num){
-                    containsNum=true;
-                }
-            }
-
-            for(int i = 0;i<numbers.length-1;i++){
-                if(numbers[locRIJ][i]==num){
-                    containsNum=true;
-                }
-            }
-
-            if(!containsNum){
-                numbers[locRIJ][locCOL]=num;
-                locked[locRIJ][locCOL]=true;
-                numberCount--;
+        for(int j = 0;j<numbers.length;j=j+3){
+            for(int i = 0;i<swapCount;i++){
+                swapRows(j+rd.nextInt(3),j+rd.nextInt(3));
+                swapCols(j+rd.nextInt(3),j+rd.nextInt(3));
             }
         }
         
+        for(int i = 0;i<swapCount;i++){
+            swapBlocksRow(rd.nextInt(3),rd.nextInt(3));
+            swapBlocksCol(rd.nextInt(3),rd.nextInt(3));
+        }
+        
+        for(int i = 0;i<removeCount;i++){
+            removeNumber(rd.nextInt(9),rd.nextInt(9));
+        }
+        
         updateGrid();
+    }
+    
+    public void removeNumber(int row, int col){
+        numbers[row][col]=0;
+        locked[row][col]=false;
+    }
+    
+    public void swapRows(int row1, int row2){
+        int tempNum;
+        
+        for(int i = 0;i<numbers.length;i++){
+            tempNum = numbers[row1][i];
+            numbers[row1][i] = numbers[row2][i];
+            numbers[row2][i] = tempNum;
+        }
+    }
+    
+    public void swapCols(int col1, int col2){
+        int tempNum;
+        
+        for(int i = 0;i<numbers.length;i++){
+            tempNum = numbers[i][col1];
+            numbers[i][col1] = numbers[i][col2];
+            numbers[i][col2] = tempNum;
+        }
+    }
+    
+    public void swapBlocksRow(int block1, int block2)
+    {
+        for(int i = 0;i<3;i++){
+            swapRows(block1*3+i,block2*3+i);
+        }
+    }
+    
+    public void swapBlocksCol(int block1, int block2)
+    {
+        for(int i = 0;i<3;i++){
+            swapCols(block1*3+i,block2*3+i);
+        }
     }
     
     public void updateGrid(){
